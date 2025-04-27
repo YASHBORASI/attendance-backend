@@ -11,6 +11,8 @@ app.use(express.json());
 const User = require('./models/user');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
 
 
 
@@ -47,6 +49,8 @@ mongoose.connect(process.env.MONGO_URI, {
     // Routes
     app.use('/api/auth', authRoutes);
     app.use('/api/users', userRoutes);
+    app.use('/api/course', courseRoutes);
+    app.use('/api/subjects',subjectRoutes)
 
     // Start server
     app.listen(PORT, () => {
