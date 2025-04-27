@@ -13,6 +13,7 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
+const scheduleRoutes = require('./routes/classScheduleRoutes');
 
 
 
@@ -44,13 +45,14 @@ mongoose.connect(process.env.MONGO_URI, {
     }
 
     // Initialize middleware after DB connection
-  
+
 
     // Routes
     app.use('/api/auth', authRoutes);
     app.use('/api/users', userRoutes);
     app.use('/api/course', courseRoutes);
-    app.use('/api/subjects',subjectRoutes)
+    app.use('/api/subjects', subjectRoutes)
+    app.use('/api/schedule', scheduleRoutes);
 
     // Start server
     app.listen(PORT, () => {
