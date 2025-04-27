@@ -40,8 +40,8 @@ exports.getSubjectById = async (req, res) => {
 
 // Update subject
 exports.updateSubject = async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ msg: 'Only admin can update subjects' });
+  if (req.user.role !== 'teacher') {
+    return res.status(403).json({ msg: 'Only teacher can update subjects' });
   }
 
   const { subject, course, credit } = req.body;
@@ -63,7 +63,7 @@ exports.updateSubject = async (req, res) => {
 
 // Delete subject
 exports.deleteSubject = async (req, res) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'teacher') {
     return res.status(403).json({ msg: 'Only admin can delete subjects' });
   }
 
