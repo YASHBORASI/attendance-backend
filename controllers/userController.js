@@ -8,49 +8,55 @@ exports.createUser = async (req, res) => {
     return res.status(403).json({ msg: 'Only admin can create users' });
   }
 
-  const {
-    firstname,
-    lastname,
-    mobile,
-    course,
-    semester,
-    designation,
-    department,
-    username,
-    email,
-    password,
-    role,
-    hireDate
-  } = req.body;
+  let users = req.body;
 
-  if (!['teacher', 'student'].includes(role)) {
-    return res.status(400).json({ msg: 'Invalid role. Must be teacher or student.' });
+  // Allow single object or array
+  if (!Array.isArray(users)) {
+    users = [users]; // Wrap single object into array
+  }
+
+  // Check if all roles are valid
+  const invalidRole = users.some(user => !['teacher', 'student'].includes(user.role));
+  if (invalidRole) {
+    return res.status(400).json({ msg: 'Invalid role found. Role must be teacher or student.' });
   }
 
   try {
-    const existing = await User.findOne({ $or: [{ email }, { username }] });
-    if (existing) return res.status(400).json({ msg: 'Email or username already in use' });
+    // Check for duplicate email/username in DB (any of them)
+    const emails = users.map(u => u.email);
+    const usernames = users.map(u => u.username);
+    const existing = await User.find({ $or: [{ email: { $in: emails } }, { username: { $in: usernames } }] });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (existing.length > 0) {
+      const duplicates = existing.map(e => ({ email: e.email, username: e.username }));
+      return res.status(400).json({ msg: 'Email or username already in use', duplicates });
+    }
 
-    const user = new User({
-      firstname,
-      lastname,
-      mobile,
-      course,
-      semester,
-      designation,
-      department,
-      username,
-      email,
-      password: hashedPassword,
-      role,
-      hireDate
-    });
+    // Hash passwords and build user objects
+    const hashedUsers = await Promise.all(
+      users.map(async (u) => {
+        const hashedPassword = await bcrypt.hash(u.password, 10);
+        return {
+          firstname: u.firstname,
+          lastname: u.lastname,
+          mobile: u.mobile,
+          course: u.course,
+          semester: u.semester,
+          designation: u.designation,
+          department: u.department,
+          username: u.username,
+          email: u.email,
+          password: hashedPassword,
+          role: u.role,
+          hireDate: u.hireDate
+        };
+      })
+    );
 
-    await user.save();
+    // Insert all users at once
+    const createdUsers = await User.insertMany(hashedUsers);
 
-    res.status(201).json({ msg: 'User created successfully', user });
+    res.status(201).json({ msg: `${createdUsers.length} user(s) created successfully`, users: createdUsers });
   } catch (err) {
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
